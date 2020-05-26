@@ -1,0 +1,19 @@
+{
+    // move コマンドや drag_select コマンドに介入して処理するかどうか。
+    // それぞれ word_move_uni, word_select_uni に変換されているので、これをfalseに
+    // する場合は Key Bindings などを変更して各コマンドに接続する必要がある。
+    "command_intercept": true,
+
+    // 文字のグループ分け。いずれにも含まれないものは "others" のグループとなる。
+    // 基本的にグループの異なる文字が隣接している位置をワードストップとして扱う。
+    // ただ slip グループが ascii, punct 以外のグループに続いている場合はストップ位置にならない。
+    // 上記以外のグループのキー名は自由に設定できる。
+    "character_groups": {
+        "ascii": "[\\u0000-\\u00FF]",
+        "punct": "[、。！”＃＄％＆’（）−＾＝〜｜＠｀［］｛｝；：＋＊，．／＜＞？]",
+        "slip": "[\\u3040-\\u309F]",    // Hiragana
+        "han": "[\\u2E80-\\u2FDF々〇〻\\u3400-\\u4DBF\\u4E00-\\u9FFF\\uF900-\\uFAFF\\U00020000-\\U0002FFFF]",
+        "katakana": "[\\u30A0-\\u30FF]",
+        "halfwidth kana": "[\\uFF66-\\uFF9F]",
+    },
+}

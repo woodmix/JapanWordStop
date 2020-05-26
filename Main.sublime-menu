@@ -1,0 +1,27 @@
+[
+    {
+        "id": "preferences",
+        "children":
+        [
+            {
+                "id": "package-settings",
+                "children":
+                [
+                    {
+                        "caption": "JapanWordStop",
+                        "children":
+                        [
+                            {
+                                "caption": "Settings",
+                                "command": "edit_settings",
+                                "args": {
+                                    "base_file": "${packages}/JapanWordStop/JapanWordStop.sublime-settings",
+                                },
+                            },
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]
