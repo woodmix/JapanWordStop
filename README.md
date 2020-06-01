@@ -1,3 +1,6 @@
+This is a plugin to make sublime work properly with Word Jump (ctrl+right, etc.) for Japanese strings.<br>
+README in English is [here](//github.com/woodmix/JapanWordStop/edit/master/README.en.md)
+
 # JapanWordStop
 
 ctrl+right などで単語ジャンプする時、Sublime標準では日本語文字列などは漢字も平仮名もすべてまとめてジャンプされます。<br>
