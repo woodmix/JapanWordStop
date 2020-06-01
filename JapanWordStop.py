@@ -165,23 +165,31 @@ class WordSelectUniCommand(sublime_plugin.TextCommand):
 
 
 #-----------------------------------------------------------------------------------------------------------
+PLUGIN_NAME = "JapanWordStop"
+
 def plugin_loaded():
     """
     このプラグインがロードされたら呼ばれる。
     """
 
     # 設定ファイルの読み出しと、
-    settings = sublime.load_settings("JapanWordStop.sublime-settings")
+    settings = sublime.load_settings(PLUGIN_NAME+".sublime-settings")
     loadSettings(settings)
 
     # 設定ファイルが変更されたときにリロードされるようにする。
-    settings.add_on_change("_", settingsChanged)
+    settings.add_on_change(PLUGIN_NAME, settingsChanged)
+
+def plugin_unloaded():
+    """
+    このプラグインがアンロードされたときに参照が切れるようにする。
+    """
+    sublime.load_settings(PLUGIN_NAME+".sublime-settings").clear_on_change(PLUGIN_NAME)
 
 def settingsChanged():
     """
     設定ファイルが変更されたら呼ばれる。
     """
-    settings = sublime.load_settings("JapanWordStop.sublime-settings")
+    settings = sublime.load_settings(PLUGIN_NAME+".sublime-settings")
     loadSettings(settings)
 
 def loadSettings(settings):
@@ -203,7 +211,7 @@ def loadSettings(settings):
         charGroups = {}
         win = sublime.active_window()
         if win:
-            win.status_message("JapanWordStop character_groups compile error (" + index + "): " + str(err))
+            win.status_message(PLUGIN_NAME+" character_groups compile error (" + index + "): " + str(err))
         raise err
 
 #-----------------------------------------------------------------------------------------------------------
