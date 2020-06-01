@@ -1,5 +1,5 @@
 This is a plugin to make sublime work properly with Word Jump (ctrl+right, etc.) for Japanese strings.<br>
-README in English is [here](//github.com/woodmix/JapanWordStop/edit/master/README.en.md)
+README in English is [here](//github.com/woodmix/JapanWordStop/blob/master/README.en.md)
 
 # JapanWordStop
 
