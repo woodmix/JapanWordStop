@@ -80,9 +80,9 @@ class WordMoveUniCommand(sublime_plugin.TextCommand):
         elif by == "word_ends":
             stopper |= sublime.CLASS_WORD_END | sublime.CLASS_PUNCTUATION_END
         elif by == "subwords":
-            stopper |= sublime.CLASS_SUB_WORD_START | sublime.CLASS_PUNCTUATION_START
+            stopper |= sublime.CLASS_SUB_WORD_START | sublime.CLASS_WORD_START | sublime.CLASS_PUNCTUATION_START
         elif by == "subword_ends":
-            stopper |= sublime.CLASS_SUB_WORD_END | sublime.CLASS_PUNCTUATION_END
+            stopper |= sublime.CLASS_SUB_WORD_END | sublime.CLASS_WORD_END | sublime.CLASS_PUNCTUATION_END
 
         # 各選択領域を一つずつ処理して、新たな選択領域を取得。
         regions = [self.processOne(region, forward, stopper, extend) for region in self.view.sel()]
@@ -97,7 +97,7 @@ class WordMoveUniCommand(sublime_plugin.TextCommand):
         指定された選択領域を新たにどうすればよいかを返す。
         """
 
-        # 最初に現れた文字位置からジャンプ先を求める。
+        # キャレット位置からジャンプ先を求める。
         stop = findUniStop(self.view, region.b, forward, stopper)
 
         # 新たな選択領域をリターン。
@@ -333,3 +333,42 @@ def getCharacterGroup(char):
             return name
 
     return "others"
+
+#-----------------------------------------------------------------------------------------------------------
+def explainCharClass(flags):
+    """
+    引数でclassify()の戻り値を説明する文字列で返す。デバッグ用。
+    """
+
+    dic = {
+        "WORD_START": sublime.CLASS_WORD_START,
+        "WORD_END": sublime.CLASS_WORD_END,
+        "PUNCTUATION_START": sublime.CLASS_PUNCTUATION_START,
+        "PUNCTUATION_END": sublime.CLASS_PUNCTUATION_END,
+        "SUB_WORD_START": sublime.CLASS_SUB_WORD_START,
+        "SUB_WORD_END": sublime.CLASS_SUB_WORD_END,
+        "LINE_START": sublime.CLASS_LINE_START,
+        "LINE_END": sublime.CLASS_LINE_END,
+        "EMPTY_LINE": sublime.CLASS_EMPTY_LINE,
+        "WORD_MIDDLE?": 0b1000000000,
+        "UNKNOWN_4FF?": 0b10000000000,
+        "COMMA_RIGHT?": 0b100000000000,
+        "COMMA_LEFT?":  0b10000000000000,
+    }
+
+    # フラグビットを一つずつチェック。ヒットしたフラグをリスト result に追加していく。
+    result = []
+    for k, v in dic.items():
+        if flags & v:
+            result.append(k)
+
+    # 引数の値からチェックしたビットをOFFに。
+    for k, v in dic.items():
+        flags &= ~v
+
+    # まだ値が残っている場合は、その二進表現を result に追加する。
+    if flags:
+        result.append(bin(flags))
+
+    # カンマで連結してリターン。
+    return ", ".join(result) if len(result) > 0 else "(none)"
