@@ -7,7 +7,9 @@ This plugin changes the behavior so that caret stops at the point where characte
 
 - The stop position can be predicted because it is simply judged by the character type only.
 - It works by intercepting standard commands, so you don't need to set any shortcut keys (configurable).
-- It does not interfere with Sublime's behavior when double-clicking. and supports Subtractive such as alt+double-click.
+- Therefore, it does not interfere with the exceptional behavior of Sublime when double-clicking.
+- The "subtractive" option is also supported.
+- Ctrl+D for word selection is also supported.
 - Word jumps in ASCII strings basically conform to the Sublime standard, and the Sublime setting "word_separators" is also reflected.<br>
 However, stop positions involving symbolic characters (especially commas) will be changed (see below).
 

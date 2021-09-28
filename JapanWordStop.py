@@ -5,7 +5,7 @@ import sre_constants
 
 
 #-----------------------------------------------------------------------------------------------------------
-class WordMoveListener(sublime_plugin.EventListener):
+class WordMoveListener(sublime_plugin.ViewEventListener):
     """
     moveコマンドやdrag_selectコマンドを監視して必要に応じて介入する。
     """
@@ -16,7 +16,7 @@ class WordMoveListener(sublime_plugin.EventListener):
         self.beforeRegions = None
 
     #-----------------------------------------------------------------------------------------------------------
-    def on_text_command(self, view, command_name, args):
+    def on_text_command(self, command_name, args):
         global intercept
 
         # 設定でインターセプトが無効になっているなら処理しない。
@@ -35,10 +35,16 @@ class WordMoveListener(sublime_plugin.EventListener):
         # 良しとする。
         if command_name == "drag_select":
             if not args.get("native") and args.get("by") in ["words", "subwords"]:
-                self.beforeRegions = [region for region in view.sel()]
+                self.beforeRegions = [region for region in self.view.sel()]
+
+        # find_under_expand コマンドで領域が空のRegionがある場合は、word_expand_uni コマンドに差し替える。
+        if command_name == "find_under_expand":
+            for region in self.view.sel():
+                if region.empty():
+                    return "word_expand_uni"
 
     #-----------------------------------------------------------------------------------------------------------
-    def on_post_text_command(self, view, command_name, args):
+    def on_post_text_command(self, command_name, args):
         global intercept
 
         # 設定でインターセプトが無効になっているなら処理しない。
@@ -53,12 +59,12 @@ class WordMoveListener(sublime_plugin.EventListener):
                 if self.beforeRegions:
 
                     # 選択領域を drag_select コマンドが発行された直前の状態に復元する。
-                    view.sel().clear()
-                    view.sel().add_all(self.beforeRegions)
+                    self.view.sel().clear()
+                    self.view.sel().add_all(self.beforeRegions)
                     self.beforeRegions = None;
 
                     # word_select_uni コマンドに転送する。
-                    view.run_command("word_select_uni", args)
+                    self.view.run_command("word_select_uni", args)
 
 
 #-----------------------------------------------------------------------------------------------------------
@@ -129,7 +135,7 @@ class WordSelectUniCommand(sublime_plugin.TextCommand):
             self.view.sel().clear()
 
         # 引数で指定された文字位置における単語領域を取得する。
-        region = self.makeWordRegion(firepoint, by)
+        region = makeWordRegion(self.view, firepoint, by)
 
         # "subtractive" オプションに従って反映する。
         if args.get("subtractive"):
@@ -137,31 +143,30 @@ class WordSelectUniCommand(sublime_plugin.TextCommand):
         else:
             self.view.sel().add(region)
 
+
+#-----------------------------------------------------------------------------------------------------------
+class WordExpandUniCommand(sublime_plugin.TextCommand):
+    """
+    word_expand_uni コマンドの実装。
+    空のRegionを持つ場合におけるfind_under_expandを、非ascii文字も考慮したストップ位置になるように代替する。
+    """
+
     #-----------------------------------------------------------------------------------------------------------
-    def makeWordRegion(self, firepoint, by):
-        """
-        指定された文字位置における単語を領域とする Region を作成する。
-        """
+    def run(self, edit, by="words"):
 
-        # 単語文字の直後にある空白文字が基点となる場合は、カーソルを一つ前に移して直前の単語が選択されるようにする。
-        if re.match(r"\s", self.view.substr(firepoint)) is not None and re.match(r"\s", self.view.substr(firepoint-1)) is None:
-            firepoint -= 1
+        # 各選択領域のうち、範囲が空のものを一つずつ処理する。
+        for region in self.view.sel():
+            if region.empty():
+                self.processOne(region, by)
 
-        # by 引数に従ってストップする位置属性を決定。
-        normalStop = sublime.CLASS_LINE_START | sublime.CLASS_LINE_END | sublime.CLASS_EMPTY_LINE
-        if by == "subwords":
-            frontwardStop = sublime.CLASS_SUB_WORD_END | sublime.CLASS_PUNCTUATION_END
-            backwardStop = sublime.CLASS_SUB_WORD_START | sublime.CLASS_PUNCTUATION_START
-        else:
-            frontwardStop = sublime.CLASS_WORD_END | sublime.CLASS_PUNCTUATION_END
-            backwardStop = sublime.CLASS_WORD_START | sublime.CLASS_PUNCTUATION_START
+    #-----------------------------------------------------------------------------------------------------------
+    def processOne(self, region, by):
 
-        # 指定位置の単語の後方・前方境界をそれぞれ取得。
-        # カーソル位置が単語境界である可能性があるので後方を取得する時はカーソルを一つ動しておく必要がある。
-        a = findUniStop(self.view, firepoint+1, False, normalStop | backwardStop)
-        b = findUniStop(self.view, firepoint, True, normalStop | frontwardStop)
+        # 引数で指定された文字位置における単語領域を取得する。
+        region = makeWordRegion(self.view, region.a, by)
 
-        return sublime.Region(a, b)
+        # 選択領域を拡張。
+        self.view.sel().add(region)
 
 
 #-----------------------------------------------------------------------------------------------------------
@@ -213,6 +218,32 @@ def loadSettings(settings):
         if win:
             win.status_message(PLUGIN_NAME+" character_groups compile error (" + index + "): " + str(err))
         raise err
+
+#-----------------------------------------------------------------------------------------------------------
+def makeWordRegion(view, firepoint, by):
+    """
+    指定された文字位置における単語を領域とする Region を作成する。
+    """
+
+    # 単語文字の直後にある空白文字が基点となる場合は、カーソルを一つ前に移して直前の単語が選択されるようにする。
+    attrs = uniclassify(view, firepoint)
+    if attrs & sublime.CLASS_WORD_END  and  not attrs & sublime.CLASS_WORD_START:
+        firepoint -= 1
+
+    # by 引数に従ってストップする位置属性を決定。
+    normalStop = sublime.CLASS_LINE_START | sublime.CLASS_LINE_END | sublime.CLASS_EMPTY_LINE
+    frontwardStop = normalStop | sublime.CLASS_WORD_END   | sublime.CLASS_PUNCTUATION_END
+    backwardStop  = normalStop | sublime.CLASS_WORD_START | sublime.CLASS_PUNCTUATION_START
+    if by == "subwords":
+        frontwardStop |= sublime.CLASS_SUB_WORD_END
+        backwardStop  |= sublime.CLASS_SUB_WORD_START
+
+    # 指定位置の単語の後方・前方境界をそれぞれ取得。
+    # カーソル位置が単語境界である可能性があるので後方を取得する時はカーソルを一つ動しておく必要がある。
+    a = findUniStop(view, firepoint+1, False, normalStop | backwardStop)
+    b = findUniStop(view, firepoint, True, normalStop | frontwardStop)
+
+    return sublime.Region(a, b)
 
 #-----------------------------------------------------------------------------------------------------------
 def findUniStop(view, pos, forward, stopper):
