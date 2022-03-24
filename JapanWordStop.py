@@ -4,7 +4,7 @@ import re
 import sre_constants
 
 
-#-----------------------------------------------------------------------------------------------------------
+#===========================================================================================================
 class WordMoveListener(sublime_plugin.ViewEventListener):
     """
     moveコマンドやdrag_selectコマンドを監視して必要に応じて介入する。
@@ -67,7 +67,7 @@ class WordMoveListener(sublime_plugin.ViewEventListener):
                     self.view.run_command("word_select_uni", args)
 
 
-#-----------------------------------------------------------------------------------------------------------
+#===========================================================================================================
 class WordMoveUniCommand(sublime_plugin.TextCommand):
     """
     word_move_uni コマンドの実装。
@@ -110,7 +110,7 @@ class WordMoveUniCommand(sublime_plugin.TextCommand):
         return sublime.Region(region.a if extend else stop, stop)
 
 
-#-----------------------------------------------------------------------------------------------------------
+#===========================================================================================================
 class WordSelectUniCommand(sublime_plugin.TextCommand):
     """
     word_select_uni コマンドの実装。
@@ -144,7 +144,7 @@ class WordSelectUniCommand(sublime_plugin.TextCommand):
             self.view.sel().add(region)
 
 
-#-----------------------------------------------------------------------------------------------------------
+#===========================================================================================================
 class WordExpandUniCommand(sublime_plugin.TextCommand):
     """
     word_expand_uni コマンドの実装。
@@ -169,7 +169,7 @@ class WordExpandUniCommand(sublime_plugin.TextCommand):
         self.view.sel().add(region)
 
 
-#-----------------------------------------------------------------------------------------------------------
+#===========================================================================================================
 PLUGIN_NAME = "JapanWordStop"
 
 def plugin_loaded():
