@@ -11,17 +11,27 @@ class WordMoveListener(sublime_plugin.ViewEventListener):
     """
 
     #-----------------------------------------------------------------------------------------------------------
+    def is_applicable(settings):
+        """
+        設定でインターセプトが無効になっているなら処理しない。
+        """
+        global intercept
+        return intercept
+
+    #-----------------------------------------------------------------------------------------------------------
+    def applies_to_primary_view_only():
+        """
+        複製されたビューでも動作するようにする。
+        """
+        return False
+
+    #-----------------------------------------------------------------------------------------------------------
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.beforeRegions = None
 
     #-----------------------------------------------------------------------------------------------------------
     def on_text_command(self, command_name, args):
-        global intercept
-
-        # 設定でインターセプトが無効になっているなら処理しない。
-        if not intercept:
-            return
 
         # "by":"words" あるいは "by":"word_ends" の move コマンドをオリジナルの word_move_uni コマンドに差し替える。ただし、"native":True の場合を除く。
         if command_name == "move":
@@ -45,11 +55,6 @@ class WordMoveListener(sublime_plugin.ViewEventListener):
 
     #-----------------------------------------------------------------------------------------------------------
     def on_post_text_command(self, command_name, args):
-        global intercept
-
-        # 設定でインターセプトが無効になっているなら処理しない。
-        if not intercept:
-            return
 
         # "by":"words" の drag_select コマンドが処理された後、領域を設定し直す。ただし "native":True の場合を除く。
         if command_name == "drag_select":
