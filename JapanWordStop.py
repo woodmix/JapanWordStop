@@ -47,7 +47,7 @@ class WordMoveListener(sublime_plugin.ViewEventListener):
             if not args.get("native") and args.get("by") in ["words", "subwords"]:
                 self.beforeRegions = [region for region in self.view.sel()]
 
-        # find_under_expand コマンドで領域が空のRegionがある場合は、word_expand_uni コマンドに差し替える。
+        # find_under_expand コマンド(Ctrl+D)で領域が空のRegionがある場合は、word_expand_uni コマンドに差し替える。
         if command_name == "find_under_expand":
             for region in self.view.sel():
                 if region.empty():
@@ -101,6 +101,10 @@ class WordMoveUniCommand(sublime_plugin.TextCommand):
         # 新たな選択領域を反映する。
         self.view.sel().clear()
         self.view.sel().add_all(regions)
+
+        # 領域が一つのみの場合に、移動後のキャレットが画面内に入るようにする。
+        if len(regions) == 1:
+            self.view.show(regions[0].b, False)
 
     #-----------------------------------------------------------------------------------------------------------
     def processOne(self, region, forward, stopper, extend):
