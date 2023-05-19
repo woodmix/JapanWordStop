@@ -359,6 +359,15 @@ def uniclassify(view, pos):
                 else:
                     attr |= sublime.CLASS_WORD_END
 
+    # 両側asciiの場合のカスタム。アルファベットと数字文字の隣接でサブワードストップが設定されないのは違和感あるので…
+    else:
+        lnum = ord('0') <= ord(left) and ord(left) <= ord('9')
+        rnum = ord('0') <= ord(right) and ord(right) <= ord('9')
+        if lnum != rnum:
+            if ( ord('a') <= ord(left) and ord(left) <= ord('z') ) or ( ord('A') <= ord(left) and ord(left) <= ord('Z') ) or ( ord('a') <= ord(right) and ord(right) <= ord('z') ) or ( ord('A') <= ord(right) and ord(right) <= ord('Z') ):
+                attr |= sublime.CLASS_SUB_WORD_START
+                attr |= sublime.CLASS_SUB_WORD_END
+
     return attr
 
 #-----------------------------------------------------------------------------------------------------------
