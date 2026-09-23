@@ -1,7 +1,6 @@
 import sublime
 import sublime_plugin
 import re
-import sre_constants
 
 
 #===========================================================================================================
@@ -221,7 +220,7 @@ def loadSettings(settings):
     try:
         for index, val in charGroups.items():
             charGroups[index] = re.compile(val)
-    except sre_constants.error as err:
+    except re.error as err:
         charGroups = {}
         win = sublime.active_window()
         if win:
