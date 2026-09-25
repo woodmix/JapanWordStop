@@ -1,7 +1,8 @@
 {
-    // move コマンドや drag_select コマンドに介入して処理するかどうか。
-    // それぞれ word_move_uni, word_select_uni に変換されているので、これをfalseに
-    // する場合は Key Bindings などを変更して各コマンドに接続する必要がある。
+    // move コマンド(Ctrl+Left/Right)や drag_select コマンド(ダブルクリック)に介入して処理するかどうか。
+    // true の場合は、それぞれ word_move_uni, word_select_uni に変換される。
+    // これをfalseにすると介入がなくなるので、Ctrl+Left/Right や ダブルクリックは Sublime Text 本来の挙動のままになる。
+    // 手動で Key Bindings などを変更して任意の操作を word_move_uni, word_select_uni コマンドに接続したい場合に false にする。
     "command_intercept": true,
 
     // 文字のグループ分け。いずれにも含まれないものは "others" のグループとなる。

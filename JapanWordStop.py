@@ -179,18 +179,20 @@ class WordExpandUniCommand(sublime_plugin.TextCommand):
 
 #===========================================================================================================
 PLUGIN_NAME = "JapanWordStop"
+charGroups = {}
 
 def plugin_loaded():
     """
     このプラグインがロードされたら呼ばれる。
     """
 
-    # 設定ファイルの読み出しと、
+    # 設定ファイルを取得して、設定ファイルが変更された時にリロードされるようにする。
+    # 初回のコンパイルに失敗しても修正後に追従できるよう、解析の前に登録する。
     settings = sublime.load_settings(PLUGIN_NAME+".sublime-settings")
-    loadSettings(settings)
-
-    # 設定ファイルが変更されたときにリロードされるようにする。
     settings.add_on_change(PLUGIN_NAME, settingsChanged)
+
+    # 設定を読み出してグローバル変数に格納する。
+    loadSettings(settings)
 
 def plugin_unloaded():
     """
@@ -211,21 +213,31 @@ def loadSettings(settings):
     """
     global charGroups, intercept
 
-    charGroups = settings.get("character_groups", {})
     intercept = settings.get("command_intercept", True)
 
+    # character_groups の取得。辞書になっていない場合はメッセージを出して中断。直前の設定を維持する。
+    rawGroups = settings.get("character_groups", {})
+    if not isinstance(rawGroups, dict):
+        win = sublime.active_window()
+        if win:
+            win.status_message(PLUGIN_NAME+" character_groups must be an object")
+        raise TypeError("character_groups must be an object")
+
     # character_groupsについては、すべて正規表現としてコンパイルしておく。
-    # コンパイルエラーがある場合はステータスバーに表示。
+    # オブジェクトでない、またはコンパイルエラーの場合はステータスバーに表示して解析中断し、直前の設定を維持する。
+    compiled = {}
     index = None
     try:
-        for index, val in charGroups.items():
-            charGroups[index] = re.compile(val)
-    except re.error as err:
-        charGroups = {}
+        for index, val in rawGroups.items():
+            compiled[index] = re.compile(val)
+    except (re.error, TypeError) as err:
         win = sublime.active_window()
         if win:
             win.status_message(PLUGIN_NAME+" character_groups compile error (" + index + "): " + str(err))
         raise err
+
+    # すべて成功した場合のみ charGroups を差し替える。
+    charGroups = compiled
 
 #-----------------------------------------------------------------------------------------------------------
 def makeWordRegion(view, firepoint, by):
